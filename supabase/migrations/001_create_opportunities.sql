@@ -1,3 +1,5 @@
+create extension if not exists pgcrypto;
+
 create table if not exists public.opportunities (
   id uuid primary key default gen_random_uuid(),
 
@@ -7,6 +9,7 @@ create table if not exists public.opportunities (
   url text not null,
   title text,
   text text not null,
+  text_hash text not null,
   author text,
 
   source_created_at timestamptz,
@@ -24,7 +27,8 @@ create table if not exists public.opportunities (
   verification_status text not null default 'UNVERIFIED',
 
   duplicate boolean not null default false,
-  duplicate_of_id uuid references public.opportunities(id),
+  duplicate_of_id uuid
+    references public.opportunities(id),
 
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -37,13 +41,16 @@ create table if not exists public.opportunities (
 );
 
 create index if not exists opportunities_score_idx
-  on public.opportunities(score desc);
+on public.opportunities(score desc);
 
 create index if not exists opportunities_source_idx
-  on public.opportunities(source_id);
+on public.opportunities(source_id);
 
 create index if not exists opportunities_classification_idx
-  on public.opportunities(classification);
+on public.opportunities(classification);
 
 create index if not exists opportunities_created_idx
-  on public.opportunities(source_created_at desc);
+on public.opportunities(source_created_at desc);
+
+create index if not exists opportunities_text_hash_idx
+on public.opportunities(text_hash);
