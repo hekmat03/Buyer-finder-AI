@@ -1,106 +1,48 @@
-import type {
-  OpportunityRecord,
-} from "./types";
+import type { OpportunityRecord } from "./types";
 
-export interface OpportunityFilters {
+export interface OpportunityFilterOptions {
   minScore?: number;
-
-  classifications?: string[];
-
-  services?: string[];
-
-  buyingIntents?: string[];
-
-  contactability?: string;
-
-  source?: string;
-
-  search?: string;
+  classification?: string;
+  buyingIntent?: string;
+  service?: string;
 }
 
 export function filterOpportunities(
   opportunities: OpportunityRecord[],
-  filters: OpportunityFilters
+  options: OpportunityFilterOptions = {}
 ): OpportunityRecord[] {
-  const search =
-    filters.search
-      ?.trim()
-      .toLowerCase();
-
-  return opportunities.filter(
-    (opportunity) => {
-      if (
-        typeof filters.minScore ===
-          "number" &&
-        opportunity.score <
-          filters.minScore
-      ) {
-        return false;
-      }
-
-      if (
-        filters.classifications
-          ?.length &&
-        !filters.classifications.includes(
-          opportunity.classification
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        filters.services?.length &&
-        !filters.services.includes(
-          opportunity.requestedService
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        filters.buyingIntents?.length &&
-        !filters.buyingIntents.includes(
-          opportunity.buyingIntent
-        )
-      ) {
-        return false;
-      }
-
-      if (
-        filters.contactability &&
-        opportunity.contactability !==
-          filters.contactability
-      ) {
-        return false;
-      }
-
-      if (
-        filters.source &&
-        opportunity.sourceId !==
-          filters.source
-      ) {
-        return false;
-      }
-
-      if (search) {
-        const searchable = [
-          opportunity.title ?? "",
-          opportunity.text,
-          opportunity.author ?? "",
-          opportunity.requestedService,
-          opportunity.classification,
-        ]
-          .join(" ")
-          .toLowerCase();
-
-        if (
-          !searchable.includes(search)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
+  return opportunities.filter((item) => {
+    if (
+      typeof options.minScore === "number" &&
+      item.score < options.minScore
+    ) {
+      return false;
     }
-  );
+
+    if (
+      options.classification &&
+      options.classification !== "ALL" &&
+      item.classification !== options.classification
+    ) {
+      return false;
+    }
+
+    if (
+      options.buyingIntent &&
+      options.buyingIntent !== "ALL" &&
+      item.buyingIntent !== options.buyingIntent
+    ) {
+      return false;
+    }
+
+    if (
+      options.service &&
+      options.service !== "ALL" &&
+      item.requestedService !== options.service
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 }
