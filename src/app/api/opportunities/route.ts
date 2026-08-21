@@ -16,35 +16,25 @@ export async function GET(
         "limit"
       );
 
-    const limit = value
-      ? Number(value)
-      : 50;
-
-    if (
-      !Number.isFinite(limit) ||
-      limit < 1
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Limit must be a positive number.",
-        },
-        { status: 400 }
-      );
-    }
+    const limit =
+      value === null
+        ? 50
+        : Number(value);
 
     const opportunities =
-      await listOpportunities(limit);
+      await listOpportunities(
+        Number.isFinite(limit)
+          ? limit
+          : 50
+      );
 
     return NextResponse.json({
       success: true,
-      count: opportunities.length,
       opportunities,
     });
   } catch (error) {
     console.error(
-      "Opportunities API error:",
+      "Opportunity list error:",
       error
     );
 
