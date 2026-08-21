@@ -5,13 +5,13 @@ import {
   useState,
 } from "react";
 
-import {
-  OpportunityList,
-} from "@/components/opportunities/OpportunityList";
-
 import type {
   OpportunityRecord,
 } from "@/lib/opportunities/types";
+
+import {
+  OpportunityDashboard,
+} from "@/components/opportunities/OpportunityDashboard";
 
 interface DiscoveryResultsProps {
   refreshKey?: number;
@@ -34,6 +34,8 @@ export function DiscoveryResults({
     useState("");
 
   useEffect(() => {
+    let cancelled = false;
+
     async function load() {
       setLoading(true);
       setError("");
@@ -57,22 +59,31 @@ export function DiscoveryResults({
           );
         }
 
-        setOpportunities(
-          data.opportunities ??
-            []
-        );
+        if (!cancelled) {
+          setOpportunities(
+            data.opportunities ?? []
+          );
+        }
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load opportunities."
-        );
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load opportunities."
+          );
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     }
 
     load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [refreshKey]);
 
   if (loading) {
@@ -92,10 +103,8 @@ export function DiscoveryResults({
   }
 
   return (
-    <OpportunityList
-      opportunities={
-        opportunities
-      }
+    <OpportunityDashboard
+      opportunities={opportunities}
     />
   );
 }
