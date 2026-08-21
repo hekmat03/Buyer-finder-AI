@@ -4,7 +4,7 @@ import type {
 
 import {
   prepareQualification,
-} from "@/lib/qualification/pre-qualification";
+} from "@/lib/qualification/prequalification";
 
 import {
   calculateOpportunityScore,
