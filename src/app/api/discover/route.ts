@@ -1,21 +1,14 @@
-import {
-  NextRequest,
-  NextResponse,
-} from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 import {
-  discoverAndSave,
-} from "@/lib/discovery/discover-and-save";
-
-import {
-  redditProvider,
-} from "@/lib/providers/reddit";
+  runRedditDiscovery,
+} from "@/lib/discovery/run";
 
 import type {
   SupportedService,
 } from "@/lib/discovery/service-match";
 
-const SERVICES: SupportedService[] = [
+const SUPPORTED_SERVICES: SupportedService[] = [
   "Web Development",
   "AI Agent",
   "AI Chatbot",
@@ -28,23 +21,25 @@ export async function POST(
   request: NextRequest
 ) {
   try {
-    const body =
-      await request.json();
+    const body = await request.json();
 
     const service =
-      body?.service as SupportedService;
+      typeof body?.service === "string"
+        ? body.service.trim()
+        : "";
 
     if (
-      !service ||
-      !SERVICES.includes(service)
+      !SUPPORTED_SERVICES.includes(
+        service as SupportedService
+      )
     ) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "A valid service is required.",
+            "Please select a valid service.",
           supportedServices:
-            SERVICES,
+            SUPPORTED_SERVICES,
         },
         { status: 400 }
       );
@@ -57,25 +52,20 @@ export async function POST(
               (
                 value: unknown
               ): value is string =>
-                typeof value ===
-                "string"
+                typeof value === "string"
             )
             .map(
-              (value) =>
-                value.trim()
+              (value) => value.trim()
             )
             .filter(Boolean)
             .slice(0, 10)
         : undefined;
 
     const limit =
-      typeof body?.limit ===
-      "number"
+      typeof body?.limit === "number"
         ? Math.min(
             Math.max(
-              Math.floor(
-                body.limit
-              ),
+              Math.floor(body.limit),
               1
             ),
             50
@@ -83,13 +73,10 @@ export async function POST(
         : 25;
 
     const result =
-      await discoverAndSave(
-        redditProvider,
-        {
-          service,
-          keywords,
-          limit,
-        }
+      await runRedditDiscovery(
+        service as SupportedService,
+        keywords,
+        limit
       );
 
     return NextResponse.json({
@@ -99,7 +86,7 @@ export async function POST(
     });
   } catch (error) {
     console.error(
-      "Discovery and save error:",
+      "Discovery route error:",
       error
     );
 
