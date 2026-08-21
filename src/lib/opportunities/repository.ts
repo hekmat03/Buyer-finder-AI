@@ -18,12 +18,20 @@ export async function saveOpportunity(
   const payload = {
     source_id: input.sourceId,
     external_id: input.externalId,
+
     url: input.url,
     title: input.title,
     text: input.text,
     author: input.author,
-    source_created_at: input.createdAt,
-    fetched_at: input.fetchedAt,
+
+    source_created_at:
+      input.createdAt,
+
+    fetched_at:
+      input.fetchedAt,
+
+    text_hash:
+      createTextHash(input.text),
 
     requested_service:
       input.requestedService,
@@ -35,6 +43,7 @@ export async function saveOpportunity(
       input.serviceMatch,
 
     score: input.score,
+
     classification:
       input.classification,
 
@@ -44,7 +53,9 @@ export async function saveOpportunity(
     verification_status:
       input.verificationStatus,
 
-    duplicate: input.duplicate,
+    duplicate:
+      input.duplicate,
+
     duplicate_of_id:
       input.duplicateOfId,
 
@@ -132,23 +143,54 @@ export async function listOpportunities(
   );
 }
 
+function createTextHash(
+  value: string
+): string {
+  let hash = 0;
+
+  for (let i = 0; i < value.length; i++) {
+    hash =
+      (hash << 5) -
+      hash +
+      value.charCodeAt(i);
+
+    hash |= 0;
+  }
+
+  return Math.abs(hash).toString(16);
+}
+
 function mapOpportunity(
   row: Record<string, unknown>
 ): OpportunityRecord {
   return {
     id: String(row.id),
-    sourceId: String(row.source_id),
+
+    sourceId: String(
+      row.source_id
+    ),
+
     externalId: String(
       row.external_id
     ),
-    url: String(row.url),
+
+    url: String(
+      row.url ?? ""
+    ),
+
     title:
-      typeof row.title === "string"
+      typeof row.title ===
+      "string"
         ? row.title
         : null,
-    text: String(row.text ?? ""),
+
+    text: String(
+      row.text ?? ""
+    ),
+
     author:
-      typeof row.author === "string"
+      typeof row.author ===
+      "string"
         ? row.author
         : null,
 
@@ -162,31 +204,39 @@ function mapOpportunity(
       row.fetched_at ?? ""
     ),
 
-    requestedService: String(
-      row.requested_service ?? ""
-    ),
+    requestedService:
+      String(
+        row.requested_service ?? ""
+      ),
 
-    buyingIntent: String(
-      row.buying_intent ?? ""
-    ),
+    buyingIntent:
+      String(
+        row.buying_intent ?? ""
+      ),
 
-    serviceMatch: String(
-      row.service_match ?? ""
-    ),
+    serviceMatch:
+      String(
+        row.service_match ?? ""
+      ),
 
     score: Number(
       row.score ?? 0
     ),
 
-    classification: String(
-      row.classification ?? ""
-    ),
+    classification:
+      String(
+        row.classification ?? ""
+      ),
 
     contactability:
-      row.contactability as OpportunityRecord["contactability"],
+      row.contactability as OpportunityRecord[
+        "contactability"
+      ],
 
     verificationStatus:
-      row.verification_status as OpportunityRecord["verificationStatus"],
+      row.verification_status as OpportunityRecord[
+        "verificationStatus"
+      ],
 
     duplicate:
       Boolean(row.duplicate),
@@ -197,12 +247,14 @@ function mapOpportunity(
         ? row.duplicate_of_id
         : null,
 
-    createdAtDb: String(
-      row.created_at ?? ""
-    ),
+    createdAtDb:
+      String(
+        row.created_at ?? ""
+      ),
 
-    updatedAtDb: String(
-      row.updated_at ?? ""
-    ),
+    updatedAtDb:
+      String(
+        row.updated_at ?? ""
+      ),
   };
 }
