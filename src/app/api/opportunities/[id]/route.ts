@@ -20,7 +20,7 @@ export async function GET(
     const { id } =
       await context.params;
 
-    if (!id?.trim()) {
+    if (!id) {
       return NextResponse.json(
         {
           success: false,
@@ -32,9 +32,7 @@ export async function GET(
     }
 
     const opportunity =
-      await getOpportunityById(
-        id.trim()
-      );
+      await getOpportunityById(id);
 
     if (!opportunity) {
       return NextResponse.json(
@@ -53,7 +51,7 @@ export async function GET(
     });
   } catch (error) {
     console.error(
-      "Opportunity detail API error:",
+      "Opportunity detail error:",
       error
     );
 
