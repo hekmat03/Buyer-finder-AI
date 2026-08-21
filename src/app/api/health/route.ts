@@ -1,23 +1,41 @@
-import { NextResponse } from "next/server";
+import {
+  NextResponse,
+} from "next/server";
 
-/**
- * Minimal liveness/config check. Reports which required env vars are
- * missing without ever echoing their values back — safe to hit from
- * a browser or uptime monitor.
- */
 export async function GET() {
-  const requiredVars = [
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
-  ];
+  const checks = {
+    application: true,
+    mistral:
+      Boolean(
+        process.env.MISTRAL_API_KEY
+      ),
+    supabase:
+      Boolean(
+        process.env.NEXT_PUBLIC_SUPABASE_URL
+      ),
+    supabaseServiceRole:
+      Boolean(
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      ),
+  };
 
-  const missing = requiredVars.filter((name) => !process.env[name]);
+  const healthy =
+    checks.application &&
+    checks.mistral &&
+    checks.supabase &&
+    checks.supabaseServiceRole;
 
-  return NextResponse.json({
-    ok: missing.length === 0,
-    missingEnvVars: missing,
-    aiProvider: process.env.AI_PROVIDER ?? "mock",
-    checkedAt: new Date().toISOString(),
-  });
+  return NextResponse.json(
+    {
+      success: healthy,
+      checks,
+      timestamp:
+        new Date().toISOString(),
+    },
+    {
+      status: healthy
+        ? 200
+        : 503,
+    }
+  );
 }
