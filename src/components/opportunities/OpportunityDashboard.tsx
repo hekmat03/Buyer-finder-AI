@@ -10,18 +10,34 @@ import type {
 } from "@/lib/opportunities/types";
 
 import {
+  calculateOpportunityStats,
+} from "@/lib/opportunities/stats";
+
+import {
+  filterOpportunities,
+} from "@/lib/opportunities/filters";
+
+import {
+  sortOpportunities,
+  type OpportunitySortMode,
+} from "@/lib/opportunities/sort";
+
+import {
   OpportunityFilters,
   type OpportunityFilterState,
 } from "./OpportunityFilters";
 
 import {
   OpportunityToolbar,
-  type OpportunitySort,
 } from "./OpportunityToolbar";
 
 import {
   OpportunityList,
 } from "./OpportunityList";
+
+import {
+  OpportunityStats,
+} from "./OpportunityStats";
 
 interface OpportunityDashboardProps {
   opportunities: OpportunityRecord[];
@@ -38,65 +54,26 @@ export function OpportunityDashboard({
     });
 
   const [sort, setSort] =
-    useState<OpportunitySort>(
+    useState<OpportunitySortMode>(
       "score"
     );
 
   const filtered =
     useMemo(() => {
       const result =
-        opportunities.filter(
-          (opportunity) => {
-            const serviceMatch =
-              filters.service ===
-                "ALL" ||
-              opportunity.requestedService ===
-                filters.service;
-
-            const classificationMatch =
-              filters.classification ===
-                "ALL" ||
-              opportunity.classification ===
-                filters.classification;
-
-            const scoreMatch =
-              opportunity.score >=
-              filters.minScore;
-
-            return (
-              serviceMatch &&
-              classificationMatch &&
-              scoreMatch
-            );
+        filterOpportunities(
+          opportunities,
+          {
+            service: filters.service,
+            classification:
+              filters.classification,
+            minScore: filters.minScore,
           }
         );
 
-      return result.sort(
-        (a, b) => {
-          if (sort === "newest") {
-            return (
-              new Date(
-                b.createdAt ?? 0
-              ).getTime() -
-              new Date(
-                a.createdAt ?? 0
-              ).getTime()
-            );
-          }
-
-          if (sort === "oldest") {
-            return (
-              new Date(
-                a.createdAt ?? 0
-              ).getTime() -
-              new Date(
-                b.createdAt ?? 0
-              ).getTime()
-            );
-          }
-
-          return b.score - a.score;
-        }
+      return sortOpportunities(
+        result,
+        sort
       );
     }, [
       opportunities,
@@ -104,8 +81,20 @@ export function OpportunityDashboard({
       sort,
     ]);
 
+  const stats = useMemo(
+    () =>
+      calculateOpportunityStats(
+        opportunities
+      ),
+    [opportunities]
+  );
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <OpportunityStats
+        stats={stats}
+      />
+
       <OpportunityFilters
         filters={filters}
         onChange={setFilters}
