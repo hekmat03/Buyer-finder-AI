@@ -7,6 +7,10 @@ import type {
   SaveOpportunityInput,
 } from "./types";
 
+import {
+  createTextHash,
+} from "@/lib/discovery/normalize";
+
 const TABLE_NAME = "opportunities";
 
 export async function saveOpportunity(
@@ -22,6 +26,7 @@ export async function saveOpportunity(
     url: input.url,
     title: input.title,
     text: input.text,
+    text_hash: createTextHash(input.text),
     author: input.author,
 
     source_created_at:
@@ -29,9 +34,6 @@ export async function saveOpportunity(
 
     fetched_at:
       input.fetchedAt,
-
-    text_hash:
-      createTextHash(input.text),
 
     requested_service:
       input.requestedService,
@@ -141,23 +143,6 @@ export async function listOpportunities(
   return (data ?? []).map(
     mapOpportunity
   );
-}
-
-function createTextHash(
-  value: string
-): string {
-  let hash = 0;
-
-  for (let i = 0; i < value.length; i++) {
-    hash =
-      (hash << 5) -
-      hash +
-      value.charCodeAt(i);
-
-    hash |= 0;
-  }
-
-  return Math.abs(hash).toString(16);
 }
 
 function mapOpportunity(
