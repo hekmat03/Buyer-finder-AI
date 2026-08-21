@@ -3,31 +3,13 @@ import type {
   SourceSearchParams,
 } from "@/lib/providers/source-provider";
 
-import type {
-  NormalizedCandidate,
-} from "@/lib/types/domain";
-
-import {
-  normalizeCandidate,
-} from "./normalize";
-
-import {
-  assessFreshness,
-} from "./freshness";
-
-import {
-  findDuplicate,
-} from "./dedupe";
-
+import { normalizeCandidate } from "./normalize";
+import { assessFreshness } from "./freshness";
+import { findDuplicate } from "./dedupe";
 import {
   matchService,
   type SupportedService,
 } from "./service-match";
-
-import {
-  assessBuyingIntent,
-} from "./buying-intent";
-
 import type {
   DiscoveryRequest,
   DiscoveryResult,
@@ -47,6 +29,16 @@ export interface DiscoveryPipelineResult {
   summary: DiscoverySummary;
 }
 
+/**
+ * Main deterministic discovery pipeline.
+ *
+ * Flow:
+ * Source → Normalize → Freshness → Deduplicate
+ * → Service Match → Results
+ *
+ * AI qualification happens later so that expensive
+ * AI calls are not made for every raw result.
+ */
 export async function runDiscoveryPipeline(
   provider: SourceProvider,
   request: DiscoveryRequest,
@@ -90,22 +82,29 @@ export async function runDiscoveryPipeline(
     };
   }
 
-  summary.discovered = rawCandidates.length;
+  summary.discovered =
+    rawCandidates.length;
 
   const results: DiscoveryResult[] = [];
 
   for (const rawCandidate of rawCandidates) {
     try {
-      const sourceNormalized =
-        provider.normalize(rawCandidate);
+      const providerNormalized =
+        provider.normalize(
+          rawCandidate
+        );
 
       const candidate =
-        normalizeCandidate(sourceNormalized);
+        normalizeCandidate(
+          providerNormalized
+        );
 
       summary.normalized++;
 
       const freshness =
-        assessFreshness(candidate.createdAt);
+        assessFreshness(
+          candidate.createdAt
+        );
 
       if (
         freshness.level === "FRESH" ||
@@ -115,39 +114,48 @@ export async function runDiscoveryPipeline(
       }
 
       const duplicate =
-        findDuplicate(candidate, existing);
+        findDuplicate(
+          candidate,
+          existing
+        );
 
       if (duplicate.duplicate) {
         summary.duplicates++;
       }
 
-      const combinedText = [
+      const searchableText = [
         candidate.title ?? "",
         candidate.text,
       ].join("\n");
 
       const serviceMatch =
         matchService(
-          combinedText,
+          searchableText,
           request.service as SupportedService
         );
 
-      if (serviceMatch.level !== "NONE") {
+      if (
+        serviceMatch.level !==
+        "NONE"
+      ) {
         summary.serviceMatches++;
       }
 
-      // Buying intent is calculated here so the pipeline
-      // already has deterministic intent information before
-      // any future AI qualification step.
-      assessBuyingIntent(combinedText);
-
       results.push({
-        sourceId: candidate.sourceId,
+        sourceId:
+          candidate.sourceId,
+
         candidate,
+
         freshness,
+
         serviceMatch,
-        duplicate: duplicate.duplicate,
-        duplicateOfId: duplicate.duplicateOfId,
+
+        duplicate:
+          duplicate.duplicate,
+
+        duplicateOfId:
+          duplicate.duplicateOfId,
       });
     } catch (error) {
       summary.errors.push(
