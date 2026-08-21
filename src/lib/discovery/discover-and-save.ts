@@ -18,10 +18,6 @@ import type {
   DiscoveryRequest,
 } from "./types";
 
-import type {
-  SupportedService,
-} from "./service-match";
-
 export interface DiscoverAndSaveResult {
   discovered: number;
   saved: number;
@@ -37,12 +33,14 @@ export async function discoverAndSave(
   const supabase =
     createSupabaseServerClient();
 
-  const { data, error } =
-    await supabase
-      .from("opportunities")
-      .select(
-        "id, source_id, external_id, url, text_hash"
-      );
+  const {
+    data,
+    error,
+  } = await supabase
+    .from("opportunities")
+    .select(
+      "id, source_id, external_id, url, text_hash"
+    );
 
   if (error) {
     throw new Error(
@@ -50,8 +48,8 @@ export async function discoverAndSave(
     );
   }
 
-  const existing = (data ?? []).map(
-    (row) => ({
+  const existing =
+    (data ?? []).map((row) => ({
       id: String(row.id),
       sourceId: String(
         row.source_id
@@ -59,12 +57,13 @@ export async function discoverAndSave(
       externalId: String(
         row.external_id
       ),
-      url: String(row.url ?? ""),
+      url: String(
+        row.url ?? ""
+      ),
       textHash: String(
         row.text_hash ?? ""
       ),
-    })
-  );
+    }));
 
   const pipeline =
     await runDiscoveryPipeline(
@@ -78,6 +77,7 @@ export async function discoverAndSave(
       pipeline.summary.discovered,
 
     saved: 0,
+
     skipped: 0,
 
     errors: [
@@ -87,7 +87,9 @@ export async function discoverAndSave(
     opportunities: [],
   };
 
-  for (const item of pipeline.results) {
+  for (
+    const item of pipeline.results
+  ) {
     try {
       if (item.duplicate) {
         result.skipped++;
@@ -97,7 +99,7 @@ export async function discoverAndSave(
       const saved =
         await savePreparedOpportunity(
           item.candidate,
-          request.service as SupportedService,
+          request.service,
           false,
           null
         );
